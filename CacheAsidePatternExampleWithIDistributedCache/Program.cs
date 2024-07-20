@@ -5,7 +5,6 @@ using CacheAsidePatternExampleWithIDistributedCache;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMemoryCache();
 builder.Services.AddDistributedMemoryCache();
 
 var app = builder.Build();
