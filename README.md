@@ -1,4 +1,4 @@
-# CacheAsidePatternExampleWithIDistributedCache
+# Cache-Aside Pattern example using IDistributedCache.
 
 Topics:
 * Adding DistributedMemoryCache to DI Container
