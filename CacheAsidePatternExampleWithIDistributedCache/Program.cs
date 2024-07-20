@@ -16,10 +16,13 @@ app.MapGet("/test-cacheaside/{id:int}", (int id, [FromServices] IDistributedCach
 
     var response = cache.GetString(id.ToString());
 
-    if (response == null)
+    if (string.IsNullOrWhiteSpace(response))
     {
         isCached = false;
-        cache.SetString(id.ToString(), $"Response for Id {id}", CacheOptions.AbsoluteExpirationInFiveSeconds);
+        
+        response = $"Response for Id {id}";
+
+        cache.SetString(id.ToString(), response, CacheOptions.AbsoluteExpirationInFiveSeconds);
     }
 
     return new { id, response, isCached };
