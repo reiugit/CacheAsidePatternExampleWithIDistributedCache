@@ -1,5 +1,7 @@
 # Cache-Aside Pattern example using IDistributedCache.
 
+This example uses an InMemory implementation of IDistributedCache.
+
 Topics:
 * Adding DistributedMemoryCache to DI Container
 * Injecting IDistributedCache into endpoint
