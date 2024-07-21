@@ -1,24 +1,33 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace CacheAsidePatternExampleWithIDistributedCache;
 
 public static class CacheExtensions
 {
-    public static (bool wasCached, string item) GetOrCreate(this IDistributedCache cache, int id, Func<string> stringFactory)
+    public static (string response, bool wasCached, double cachedSinceInSeconds) GetOrCreateWithCacheInfo(
+        this IDistributedCache cache, int id, Func<string> stringFactory)
     {
-        bool wasCached = true;
+        var cachedJson = cache.GetString(id.ToString());
 
-        var response = cache.GetString(id.ToString());
-
-        if (string.IsNullOrWhiteSpace(response))
+        if (!string.IsNullOrWhiteSpace(cachedJson))
         {
-            wasCached = false;
+            var cachedResponseWithTimestamp = JsonSerializer.Deserialize<ResponseWithTimestamp>(cachedJson);
+            
+            var cachedSinceInSeconds = DateTimeOffset.UtcNow
+                .Subtract(cachedResponseWithTimestamp!.CachedAt)
+                .TotalSeconds;
 
-            response = stringFactory();
-
-            cache.SetString(id.ToString(), response, CacheOptions.AbsoluteExpirationInFiveSeconds);
+            return (cachedResponseWithTimestamp!.Response, true, cachedSinceInSeconds);
         }
 
-        return (wasCached, response);
+        var response = stringFactory();
+
+        var responseWithTimestamp = new ResponseWithTimestamp(response, DateTimeOffset.UtcNow);
+        var json = JsonSerializer.Serialize(responseWithTimestamp);
+
+        cache.SetString(id.ToString(), json, CacheOptions.AbsoluteExpirationInFiveSeconds);
+
+        return (response, false, 0);
     }
 }
