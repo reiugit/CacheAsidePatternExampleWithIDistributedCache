@@ -1,12 +1,13 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using CacheAsidePatternExampleWithIMemoryCache;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
 namespace CacheAsidePatternExampleWithIDistributedCache;
 
 public static class CacheExtensions
 {
-    public static (string response, bool wasCached, double cachedSinceInSeconds) GetOrCreateWithCacheInfo(
-        this IDistributedCache cache, int id, Func<string> stringFactory)
+    public static ResponseWithCacheInfo GetOrCreateWithCacheInfo(
+        this IDistributedCache cache, int id, Func<string> factory)
     {
         var cachedJson = cache.GetString(id.ToString());
 
@@ -18,16 +19,16 @@ public static class CacheExtensions
                 .Subtract(cachedResponseWithTimestamp!.CachedAt)
                 .TotalSeconds;
 
-            return (cachedResponseWithTimestamp!.Response, true, cachedSinceInSeconds);
+            return new(id, cachedResponseWithTimestamp!.Response, true, cachedSinceInSeconds);
         }
 
-        var response = stringFactory();
+        var response = factory();
 
         var responseWithTimestamp = new ResponseWithTimestamp(response, DateTimeOffset.UtcNow);
         var json = JsonSerializer.Serialize(responseWithTimestamp);
 
         cache.SetString(id.ToString(), json, CacheOptions.AbsoluteExpirationInFiveSeconds);
 
-        return (response, false, 0);
+        return new(id, response, false, 0);
     }
 }
